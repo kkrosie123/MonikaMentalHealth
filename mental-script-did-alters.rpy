@@ -1,4 +1,7 @@
 #supports the DID alter function
+#List of tuples:
+# [0] - Alter name
+# [1] - Alter gender
 default persistent._mental_health_alters = list()
 default persistent._mental_health_current_alter = None
 
@@ -68,20 +71,18 @@ label mental_health_did_add_alter:
                 done = True
                 break
 
-            persistent._mental_health_alters.append(alter_name)
-            
-    menu:
-        m "What gender is this person?"
-        "Male":
-            $ alter_gender == "M"
-        "Female":
-            $ alter_gender == "F"
-        "Neither":
-            $ alter_gender == "X"
+            renpy.say(m, "What is their gender?", interact=False)
+            alter_gender = display_menu(
+                [
+                    ("Male", 'M'),
+                    ("Female", 'F'),
+                    ("Neither", 'X'),
+                ]
+            )
 
-    persistent._mental_health_alters_gender.append(alter_gender)
-            
-            m("Would you like to add another alter?")
+            persistent._mental_health_alters.append((alter_name, alter_gender))
+
+            renpy.say(m, "Would you like to add another alter?", interact=False)
             done = display_menu(
                 [
                     ("Yes.", False),
@@ -139,8 +140,8 @@ label mental_health_did_player_empty:
 label mental_health_did_menu_front:
     python:
         selectable_alters = [
-            (alter_name, alter_name, False, False)
-            for alter_name in persistent._mental_health_alters
+            (alter_name, (alter_name, alter_gender), False, False)
+            for alter_name, alter_gender in persistent._mental_health_alters
         ]
 
         final_item = ("Nevermind.", False, False, False, 20)
@@ -151,11 +152,19 @@ label mental_health_did_menu_front:
         persistent._mental_health_current_alter = index(_return)
         m "Alright!"
 
-        #HACK: We set an alter by setting the playername to the alter name. This way it carries over sessions
-        persistent.playername = _return
-        player = _return
-        #attempt to set gender
-        persistent.gender = alter_gender
+        #Deconstruct the tuple
+        python:
+            alter_name, alter_gender = _return
+
+            #HACK: We set an alter by setting the playername to the alter name. This way it carries over sessions
+            persistent.playername = _return
+            player = _return
+
+            #Update the stored gender for session carryover
+            persistent.gender = alter_gender
+
+        #And finally update any/all pronoun gender vars
+        call mas_set_gender
 
     else:
         m "Oh, alright."

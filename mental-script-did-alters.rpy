@@ -3,7 +3,7 @@ default persistent._mental_health_alters = list()
 default persistent._mental_health_current_alter = None
 
 #persistent values
-default persistent._mental_player_has_did = False
+default persistent._mental_health_player_has_did = False
 
 
 init 5 python:
@@ -14,7 +14,7 @@ init 5 python:
             category=['you', 'mental health'],
             prompt="I want to change my system and alters.",
             pool=True,
-            conditional="persistent._mental_player_has_did",
+            conditional="persistent._mental_health_player_has_did",
             action=EV_ACT_UNLOCK,
             rules={"no_unlock": None}
         )
@@ -23,7 +23,7 @@ init 5 python:
 label mental_health_did_menu_0:
     if not persistent._mental_health_alters:
         m "Oh, actually, would you mind telling me your alters names?"
-        m "I'll need to know who they are so I can be sure to refer to you properly."
+        m "I'll need to know who they are so I can be sure to refer to you all properly."
         call mental_health_did_add_alter
 
     python:
@@ -69,7 +69,18 @@ label mental_health_did_add_alter:
                 break
 
             persistent._mental_health_alters.append(alter_name)
+            
+    menu:
+        m "What gender is this person?"
+        "Male":
+            $ alter_gender == "M"
+        "Female":
+            $ alter_gender == "F"
+        "Neither":
+            $ alter_gender == "X"
 
+    persistent._mental_health_alters_gender.append(alter_gender)
+            
             m("Would you like to add another alter?")
             done = display_menu(
                 [
@@ -143,6 +154,8 @@ label mental_health_did_menu_front:
         #HACK: We set an alter by setting the playername to the alter name. This way it carries over sessions
         persistent.playername = _return
         player = _return
+        #attempt to set gender
+        persistent.gender = alter_gender
 
     else:
         m "Oh, alright."

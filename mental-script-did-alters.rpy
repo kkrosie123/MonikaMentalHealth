@@ -1,30 +1,10 @@
 #supports the DID alter function
-#defaults:
-#there are 10 slots
-default persistent._mental_health_did_alter_1 = "Empty"
-default persistent._mental_health_did_alter_2 = "Empty"
-default persistent._mental_health_did_alter_3 = "Empty"
-default persistent._mental_health_did_alter_4 = "Empty"
-default persistent._mental_health_did_alter_5 = "Empty"
-default persistent._mental_health_did_alter_6 = "Empty"
-default persistent._mental_health_did_alter_7 = "Empty"
-default persistent._mental_health_did_alter_8 = "Empty"
-default persistent._mental_health_did_alter_9 = "Empty"
-default persistent._mental_health_did_alter_10 = "Empty"
+default persistent._mental_health_alters = list()
+default persistent._mental_health_current_alter = None
+
 #persistent values
-default persistent.mental_player_has_did = False
-#default for the database
-#alternative slot definitions
-default player_1 = persistent._mental_health_did_alter_1
-default player_2 = persistent._mental_health_did_alter_2
-default player_3 = persistent._mental_health_did_alter_3
-default player_4 = persistent._mental_health_did_alter_4
-default player_5 = persistent._mental_health_did_alter_5
-default player_6 = persistent._mental_health_did_alter_6
-default player_7 = persistent._mental_health_did_alter_7
-default player_8 = persistent._mental_health_did_alter_8
-default player_9 = persistent._mental_health_did_alter_9
-default player_10 = persistent._mental_health_did_alter_10
+default persistent._mental_player_has_did = False
+
 
 init 5 python:
     addEvent(
@@ -34,24 +14,32 @@ init 5 python:
             category=['you', 'mental health'],
             prompt="I want to change my system and alters.",
             pool=True,
-            #if persistent.mental_player_has_did = True:
-                #unlocked=True
-            #enabled permanently for now
-            unlocked = True
+            conditional="persistent._mental_player_has_did",
+            action=EV_ACT_UNLOCK,
+            rules={"no_unlock": None}
         )
     )
 
 label mental_health_did_menu_0:
+    if not persistent._mental_health_alters:
+        m "Oh, actually, would you mind telling me your alters names?"
+        m "I'll need to know who they are so I can be sure to refer to you properly."
+        call mental_health_did_add_alter
+
     python:
         did_fronting_quips = [
             _("I am currently fronting as..."),
             _("My current fronter is...")
         ]
+
         did_fronting_quip = random.choice(did_fronting_quips)
+
         did_menu_items = [
-            ("I want to edit my alters.", "mental_health_did_setup", False, False),
-            ("[did_fronting_quip]", "mental_health_did_fronting", False, False)
+            ("I want to add a new alter.", "mental_health_did_add_alter", False, False),
+            ("I want to remove an alter.", "mental_health_did_remove_alter", False, False),
+            ("[did_fronting_quip]", "mental_health_did_menu_front", False, False)
         ]
+
         final_item = ("Nevermind.", False, False, False, 20)
 
     call screen mas_gen_scrollable_menu(did_menu_items, mas_ui.SCROLLABLE_MENU_MEDIUM_AREA, mas_ui.SCROLLABLE_MENU_XALIGN, final_item)
@@ -63,17 +51,71 @@ label mental_health_did_menu_0:
 
     return
 
-#fronting and choosing predefined alters
+#editing alters
+label mental_health_did_add_alter:
+    python:
+        done = False
+        while not done:
+            alter_name = mas_input(
+                _("So what's their name?"),
+                allow=" abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_",
+                length=10,
+                screen_kwargs={"use_return_button": True, "return_button_value": "nevermind"}
+            ).strip(' \t\n\r').lower()
 
-label mental_health_did_fronting:
-    m "Who do you want to front as?"
-    call mental_health_did_menu_front
+            if alter_name == "nevermind":
+                m "Oh, alright."
+                done = True
+                break
+
+            persistent._mental_health_alters.append(alter_name)
+
+            m("Would you like to add another alter?")
+            done = display_menu(
+                [
+                    ("Yes.", False),
+                    ("No.", True)
+                ]
+            )
     return
 
-#editing alters
+label mental_health_did_remove_alter:
+    label .rm_alter_loop:
+    m "Which alter would you like to remove?{nw}"
+    python:
+        selectable_alters = [
+            (alter_name, alter_name, False, False)
+            for alter_name in persistent._mental_health_alters
+        ]
 
-label mental_health_did_setup:
-    m "Oh? Do I get to meet someone new?"
+        final_item = ("Nevermind.", False, False, False, 20)
+
+    renpy.say(m, "Which alter would you like to remove?{fast}", interact=False)
+    call screen mas_gen_scrollable_menu(selectable_alters, mas_ui.SCROLLABLE_MENU_MEDIUM_AREA, mas_ui.SCROLLABLE_MENU_XALIGN, final_item)
+
+    if _return:
+        m "Alright, [player]."
+
+        m "Are you sure you want to remove [_return]?{nw}"
+        menu:
+            m "Are you sure you want to remove [_return]?{fast}"
+
+            "Yes":
+                m "Alright."
+                $ persistent._mental_health_alters.remove(_return)
+
+                m "Would you like to remove another alter?{nw}"
+                menu:
+                    m "Would you like to remove another alter?{fast}"
+
+                    "Yes":
+                        jump .rm_alter_loop
+
+                    "No":
+                        pass
+
+            "No":
+                m "Alright, [player]."
     return
 
 label mental_health_did_player_empty:
@@ -85,96 +127,24 @@ label mental_health_did_player_empty:
 #fronting menu
 label mental_health_did_menu_front:
     python:
-        did_menu_front_items = [
-            ("[player_1]", "front_player_1", False, False),
-            ("[player_2]", "front_player_2", False, False),
-            ("[player_3]", "front_player_3", False, False),
-            ("[player_4]", "front_player_4", False, False),
-            ("[player_5]", "front_player_5", False, False),
-            ("[player_6]", "front_player_6", False, False),
-            ("[player_7]", "front_player_7", False, False),
-            ("[player_8]", "front_player_8", False, False),
-            ("[player_9]", "front_player_9", False, False),
-            ("[player_10]", "front_player_10", False, False)
+        selectable_alters = [
+            (alter_name, alter_name, False, False)
+            for alter_name in persistent._mental_health_alters
         ]
+
         final_item = ("Nevermind.", False, False, False, 20)
 
     call screen mas_gen_scrollable_menu(did_menu_front_items, mas_ui.SCROLLABLE_MENU_MEDIUM_AREA, mas_ui.SCROLLABLE_MENU_XALIGN, final_item)
 
     if _return:
-        call expression _return
+        persistent._mental_health_current_alter = index(_return)
+        m "Alright!"
+
+        #HACK: We set an alter by setting the playername to the alter name. This way it carries over sessions
+        persistent.playername = _return
+        player = _return
+
     else:
         m "Oh, alright."
 
     return
-
-label front_player_1:
-    if player_1 == "Empty":
-        call mental_health_did_player_empty
-    else:
-        m "Test"
-    return
-
-label front_player_2:
-    if player_2 == "Empty":
-        call mental_health_did_player_empty
-    else:
-        m "Test"
-    return
-
-label front_player_3:
-    if player_3 == "Empty":
-        call mental_health_did_player_empty
-    else:
-        m "Test"
-    return
-
-label front_player_4:
-    if player_4 == "Empty":
-        call mental_health_did_player_empty
-    else:
-        m "Test"
-    return
-
-label front_player_5:
-    if player_5 == "Empty":
-        call mental_health_did_player_empty
-    else:
-        m "Test"
-    return
-
-label front_player_6:
-    if player_6 == "Empty":
-        call mental_health_did_player_empty
-    else:
-        m "Test"
-    return
-
-label front_player_7:
-    if player_7 == "Empty":
-        call mental_health_did_player_empty
-    else:
-        m "Test"
-    return
-
-label front_player_8:
-    if player_8 == "Empty":
-        call mental_health_did_player_empty
-    else:
-        m "Test"
-    return
-
-label front_player_9:
-    if player_9 == "Empty":
-        call mental_health_did_player_empty
-    else:
-        m "Test"
-    return
-
-label front_player_10:
-    if player_10 == "Empty":
-        call mental_health_did_player_empty
-    else:
-        m "Test"
-    return
-

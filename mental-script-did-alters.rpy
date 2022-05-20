@@ -8,6 +8,35 @@ default persistent._mental_health_current_alter = None
 #persistent values
 default persistent._mental_health_player_has_did = False
 
+#Flag used to avoid continually adding the current player state to the list of alters
+default persistent._mental_health_added_initial_entry = False
+
+#Submod header
+init -990 python in mas_submod_utils:
+    Submod(
+        author="Kkrosie123",
+        coauthors=["multimokia"],
+        name="pls add name here",
+        description="pls add description here",
+        version="1.0.0",
+        version_updates={}
+    )
+
+#As a baseline, we can assume the current player information is one of the player's alters.
+#If this information is present, let's add it to the list of alters.
+init 10 python:
+    if (
+        not persistent._mental_health_added_initial_entry
+        and persistent.gender
+        and persistent.playername
+    ):
+        new_alter_data = (player, persistent.gender)
+        persistent._mental_health_alters.append(new_alter_data)
+
+        #We should also set the current alter
+        persistent._mental_health_current_alter = persistent._mental_health_alters.index(new_alter_data)
+        #Flag so we don't keep appending the playername + current gender
+        persistent._mental_health_added_initial_entry = True
 
 init 5 python:
     addEvent(
@@ -25,8 +54,8 @@ init 5 python:
 
 label mental_health_did_menu_0:
     if not persistent._mental_health_alters:
-        m "Oh, actually, would you mind telling me your alters names?"
-        m "I'll need to know who they are so I can be sure to refer to you all properly."
+        m 3eud "Oh, actually, would you mind telling me your alters names?"
+        m 3rksdlb "I'll need to know who they are so I can be sure to refer to you all properly."
         call mental_health_did_add_alter
 
     python:
@@ -45,12 +74,14 @@ label mental_health_did_menu_0:
 
         final_item = ("Nevermind.", False, False, False, 20)
 
+    show monika at t21
     call screen mas_gen_scrollable_menu(did_menu_items, mas_ui.SCROLLABLE_MENU_MEDIUM_AREA, mas_ui.SCROLLABLE_MENU_XALIGN, final_item)
+    show monika at t11
 
     if _return:
         call expression _return
     else:
-        m "Oh, alright."
+        m 1eka "Oh, alright."
 
     return
 
@@ -64,15 +95,14 @@ label mental_health_did_add_alter:
                 allow=" abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_",
                 length=10,
                 screen_kwargs={"use_return_button": True, "return_button_value": "nevermind"}
-            ).strip(' \t\n\r').lower()
+            ).strip(' \t\n\r').lower().capitalize()
 
-            if alter_name == "nevermind":
-                m "Oh, alright."
-                done = True
+            if alter_name == "Nevermind":
+                m("Oh, alright.")
                 break
 
             renpy.say(m, "What is their gender?", interact=False)
-            alter_gender = display_menu(
+            alter_gender = menu(
                 [
                     ("Male", 'M'),
                     ("Female", 'F'),
@@ -82,13 +112,18 @@ label mental_health_did_add_alter:
 
             persistent._mental_health_alters.append((alter_name, alter_gender))
 
-            renpy.say(m, "Would you like to add another alter?", interact=False)
-            done = display_menu(
+            renpy.say(m, "Would you like to introduce me to another alter?", interact=False)
+            done = menu(
                 [
                     ("Yes.", False),
                     ("No.", True)
                 ]
             )
+
+    #We only do this dialogue if the player doesn't exit this topic via Nevermind
+    if done:
+        m 3hua "Perfect, thanks [player]~"
+        m 1eua "I should be able to refer to you all properly, all I need you to do is tell me who's fronting."
     return
 
 label mental_health_did_remove_alter:
@@ -96,21 +131,24 @@ label mental_health_did_remove_alter:
     m "Which alter would you like to remove?{nw}"
     python:
         selectable_alters = [
-            (alter_name, alter_name, False, False)
-            for alter_name in persistent._mental_health_alters
+            (alter_data[0], alter_data, False, False)
+            for alter_data in persistent._mental_health_alters
         ]
 
         final_item = ("Nevermind.", False, False, False, 20)
+        renpy.say(m, "Which alter would you like to remove?{fast}", interact=False)
 
-    renpy.say(m, "Which alter would you like to remove?{fast}", interact=False)
+    show monika at t21
     call screen mas_gen_scrollable_menu(selectable_alters, mas_ui.SCROLLABLE_MENU_MEDIUM_AREA, mas_ui.SCROLLABLE_MENU_XALIGN, final_item)
+    show monika at t11
 
     if _return:
+        $ alter_name = _return[0]
         m "Alright, [player]."
 
-        m "Are you sure you want to remove [_return]?{nw}"
+        m "Are you sure you want to remove [alter_name]?{nw}"
         menu:
-            m "Are you sure you want to remove [_return]?{fast}"
+            m "Are you sure you want to remove [alter_name]?{fast}"
 
             "Yes":
                 m "Alright."
@@ -130,12 +168,6 @@ label mental_health_did_remove_alter:
                 m "Alright, [player]."
     return
 
-label mental_health_did_player_empty:
-    m "Oh, sorry [player]."
-    m "You haven't set up this alter yet."
-    m "Once you set it up, I'll be happy to talk to you about it!"
-    return
-
 #fronting menu
 label mental_health_did_menu_front:
     python:
@@ -146,19 +178,21 @@ label mental_health_did_menu_front:
 
         final_item = ("Nevermind.", False, False, False, 20)
 
-    call screen mas_gen_scrollable_menu(did_menu_front_items, mas_ui.SCROLLABLE_MENU_MEDIUM_AREA, mas_ui.SCROLLABLE_MENU_XALIGN, final_item)
+    show monika at t21
+    $ renpy.say(m, "So who am I spending time with right now?~", interact=False)
+    call screen mas_gen_scrollable_menu(selectable_alters, mas_ui.SCROLLABLE_MENU_MEDIUM_AREA, mas_ui.SCROLLABLE_MENU_XALIGN, final_item)
+    show monika at t11
 
     if _return:
-        persistent._mental_health_current_alter = index(_return)
-        m "Alright!"
-
-        #Deconstruct the tuple
         python:
+            persistent._mental_health_current_alter = persistent._mental_health_alters.index(_return)
+
+            #Deconstruct the tuple
             alter_name, alter_gender = _return
 
             #HACK: We set an alter by setting the playername to the alter name. This way it carries over sessions
-            persistent.playername = _return
-            player = _return
+            persistent.playername = alter_name
+            player = alter_name
 
             #Update the stored gender for session carryover
             persistent.gender = alter_gender
@@ -166,7 +200,9 @@ label mental_health_did_menu_front:
         #And finally update any/all pronoun gender vars
         call mas_set_gender
 
+        m 1hua "Alright [player], what would you like to do today?"
+
     else:
-        m "Oh, alright."
+        m 1eka "Oh, alright."
 
     return

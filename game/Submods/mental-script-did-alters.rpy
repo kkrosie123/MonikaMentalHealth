@@ -232,7 +232,7 @@ label mental_health_did_setup:
     m 1hua "Just know I'll always accept you, [player]."
     m 3rksdld "Oh, but should I be calling you that?"
     m 3eka "Please feel free to tell me who's spending time with me."
-    m 1eua "I would love to get to know each and every one of you."
+    m 1eua "I would love to get to know everyone in your system."
     m 1ekbsa "And I will do my absolute best to make sure you each feel comfortable and loved, okay?"
     m 1eubsa "Thanks for opening up to me~"
     $ persistent._mental_health_player_has_did = True

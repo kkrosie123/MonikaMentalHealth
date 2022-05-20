@@ -17,7 +17,11 @@ init -990 python in mas_submod_utils:
         author="Kkrosie123",
         coauthors=["multimokia"],
         name="Dissociate Identity Disorder Support",
-        description="This is a submod created to support Monika recognizing and addressing multiple alters of a system. There are infinite slots for alters, so don't worry about adding too many! Monika will remember the genders and names of your alters. Enjoy!",
+        description=(
+            "This is a submod created to support Monika recognizing and addressing multiple alters of a system. "
+            "There are infinite slots for alters, so don't worry about adding too many! "
+            "Monika will remember the genders and names of your alters. Enjoy!"
+        ),
         version="1.0.0",
         version_updates={}
     )
@@ -206,30 +210,30 @@ label mental_health_did_menu_front:
         m 1eka "Oh, alright."
 
     return
-    
+
 init 5 python:
     addEvent(
         Event(
             persistent.event_database,
             eventlabel="mental_health_did_setup",
             category=['you', 'mental health'],
-            prompt="I have Dissociative Identity Disorder.",
+            prompt="I have Dissociative Identity Disorder",
             pool=True,
-            action=EV_ACT_UNLOCK,
-            rules={"no_unlock": None}
+            unlocked=True
         )
     )
-    
+
 label mental_health_did_setup:
-    m "Wait, really?"
-    m "Isn't that the condition where you have more than one person inside your brain?"
-    m "It's such a fascinating condition."
-    m "And it's so rare - you must be one in a million!"
-    m "Well, if you're wondering what I think, I actually don't mind at all."
-    m "Just know I'll always accept you, [player]."
-    m "Oh, but should I be calling you that?"
-    m "Please feel free to tell me who's spending time with me."
-    m "I would love to get to know each and every one of you."
-    m "And I will do my absolute best to make sure you each feel comfortable and loved, okay?"
-    m "Thanks for opening up to me~"
+    m 3wuo "Wait, really?"
+    m 1etd "Isn't that the condition where you have more than one person inside your brain?"
+    m 3eua "It's such a fascinating condition,{w=0.1} {nw}"
+    extend 3wud "and it's so rare--{w=0.2}you must be one in a million!"
+    m 1eka "Well, if you're wondering what I think,{w=0.1} I actually don't mind at all."
+    m 1hua "Just know I'll always accept you, [player]."
+    m 3rksdld "Oh, but should I be calling you that?"
+    m 3eka "Please feel free to tell me who's spending time with me."
+    m 1eua "I would love to get to know each and every one of you."
+    m 1ekbsa "And I will do my absolute best to make sure you each feel comfortable and loved, okay?"
+    m 1eubsa "Thanks for opening up to me~"
+    $ persistent._mental_health_player_has_did = True
     return

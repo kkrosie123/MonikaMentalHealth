@@ -46,7 +46,7 @@ init 5 python:
     addEvent(
         Event(
             persistent.event_database,
-            eventlabel="mental_health_did_menu_0",
+            eventlabel="monika_mental_health_system_alter_config",
             category=['you', 'mental health'],
             prompt="I want to change my system and alters.",
             pool=True,
@@ -56,7 +56,7 @@ init 5 python:
         )
     )
 
-label mental_health_did_menu_0:
+label monika_mental_health_system_alter_config:
     if not persistent._mental_health_alters:
         m 3eud "Oh, actually, would you mind telling me your alters names?"
         m 3rksdlb "I'll need to know who they are so I can be sure to refer to you all properly."
